@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-container">
+    <div class="card">
+        <h2 style="text-align: center; margin-bottom: 0.5rem;">
+            <i class="fas fa-qrcode"></i> Generate Attendance QR
+        </h2>
+        <p style="text-align: center; color: #6b7280; margin-bottom: 2rem;">
+            Generate a dynamic QR code for attendance. The code will expire in exactly 3 minutes.
+        </p>
+
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <button id="generateBtn" class="btn primary-btn btn-lg" onclick="generateQR()">
+                <i class="fas fa-plus-circle"></i> Generate QR Code
+            </button>
+            <button id="regenerateBtn" class="btn secondary-btn btn-lg" onclick="generateQR()" style="display: none;">
+                <i class="fas fa-redo"></i> Regenerate QR
+            </button>
+        </div>
+
+        <div id="qr-container" class="qr-display-container" style="display: none;">
+            <div id="qrcode" class="qr-code-wrapper"></div>
+            <div id="timer" class="qr-timer">3:00</div>
+            <p id="status-text" class="qr-status">
+                <i class="fas fa-check-circle"></i> QR Code Active
+            </p>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+    let timerInterval;
+    const qrContainer = document.getElementById('qr-container');
+    const qrcodeDiv = document.getElementById('qrcode');
+    const timerDiv = document.getElementById('timer');
+    const generateBtn = document.getElementById('generateBtn');
+    const regenerateBtn = document.getElementById('regenerateBtn');
+    const statusText = document.getElementById('status-text');
+
+    // Restore state from server if exists
+    const activeSession = {{ active_session | tojson | safe }};
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (activeSession) {
+            restoreSession(activeSession);
+        }
+    });
+
+    function restoreSession(sessionData) {
+        generateBtn.style.display = 'none';
+        qrContainer.style.display = 'flex';
+        regenerateBtn.style.display = 'none';
+
+        // Render QR
+        qrcodeDiv.innerHTML = '';
+        qrcodeDiv.classList.remove('expired');
+        new QRCode(qrcodeDiv, {
+            text: sessionData.session_id,
+            width: 256,
+            height: 256
+        });
+
+        // Start Timer
+        startTimer(sessionData.expires_at);
+
+        statusText.innerHTML = '<i class="fas fa-check-circle"></i> QR Code Active (Restored)';
+    }
+
+    async function generateQR() {
+        // Reset UI
+        qrcodeDiv.innerHTML = '';
+        qrcodeDiv.classList.remove('expired');
+        clearInterval(timerInterval);
+        qrContainer.style.display = 'flex';
+        generateBtn.style.display = 'none';
+        regenerateBtn.style.display = 'none';
+
+        // Show loading
+        qrcodeDiv.innerHTML = '<div class="spinner spinner-lg" style="margin: 50px auto;"></div>';
+        statusText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+        try {
+            const response = await fetch('/api/qr/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Clear loading
+                qrcodeDiv.innerHTML = '';
+
+                // Generate QR
+                new QRCode(qrcodeDiv, {
+                    text: data.session_id,
+                    width: 256,
+                    height: 256
+                });
+
+                // Start Timer
+                startTimer(data.expires_at);
+
+                statusText.innerHTML = '<i class="fas fa-check-circle"></i> QR Code Active';
+            } else {
+                qrcodeDiv.innerHTML = '<p style="color: #ef4444;">Error: ' + data.error + '</p>';
+                generateBtn.style.display = 'inline-flex';
+                qrContainer.style.display = 'none';
+            }
+        } catch (err) {
+            console.error(err);
+            qrcodeDiv.innerHTML = '<p style="color: #ef4444;">Failed to connect to server.</p>';
+            generateBtn.style.display = 'inline-flex';
+            qrContainer.style.display = 'none';
+        }
+    }
+
+    function startTimer(expiryIso) {
+        // Ensure UTC parsing by appending Z if missing
+        let expiryTime = new Date(expiryIso + (expiryIso.endsWith('Z') ? "" : "Z")).getTime();
+
+        // Clear any existing timer
+        if (timerInterval) clearInterval(timerInterval);
+
+        const updateTimer = () => {
+            const now = new Date().getTime();
+            const distance = expiryTime - now;
+
+            if (distance < 0) {
+                clearInterval(timerInterval);
+                timerDiv.textContent = "EXPIRED";
+                timerDiv.classList.remove('warning', 'danger');
+                statusText.innerHTML = '<i class="fas fa-times-circle"></i> QR Code Expired';
+                qrcodeDiv.classList.add('expired');
+
+                // Add expired overlay
+                const overlay = document.createElement('div');
+                overlay.className = 'qr-expired-overlay';
+                overlay.innerHTML = '<i class="fas fa-ban" style="font-size: 3rem; margin-bottom: 0.5rem;"></i><div>Expired</div>';
+                qrcodeDiv.appendChild(overlay);
+
+                regenerateBtn.style.display = 'inline-flex';
+                return;
+            }
+
+            const totalSeconds = Math.floor(distance / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+
+            timerDiv.textContent = minutes + ":" + (seconds < 10 ? "0" + seconds : seconds);
+
+            // Update timer color based on remaining time
+            timerDiv.classList.remove('warning', 'danger');
+            if (totalSeconds <= 30) {
+                timerDiv.classList.add('danger');
+            } else if (totalSeconds <= 60) {
+                timerDiv.classList.add('warning');
+            }
+        };
+
+        // Run immediately then interval
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 1000);
+    }
+</script>
+{% endblock %}

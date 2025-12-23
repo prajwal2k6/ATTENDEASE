@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-container">
+    <div class="card">
+        <h2 style="text-align: center; margin-bottom: 0.5rem;">
+            <i class="fas fa-camera"></i> Scan Attendance QR
+        </h2>
+        <p style="text-align: center; color: #6b7280; margin-bottom: 2rem;">
+            Allow camera access to scan the attendance QR code displayed by your teacher.
+        </p>
+
+        <div id="reader" class="camera-container" style="display:none;"></div>
+
+        <div id="scan-result" style="display: none;">
+            <div class="message-box">
+                <div class="message-icon success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3 id="result-message" style="color: #10b981; margin-bottom: 1rem;">Attendance Marked!</h3>
+                <p style="color: #6b7280; margin-bottom: 1.5rem;">You have been marked present for this session.</p>
+                <button class="btn secondary-btn" onclick="location.reload()">
+                    <i class="fas fa-redo"></i> Scan Another
+                </button>
+            </div>
+        </div>
+
+        <div id="scan-error" style="display: none;">
+            <div class="message-box">
+                <div class="message-icon error">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <h3 id="error-message" style="color: #ef4444; margin-bottom: 1rem;">Scan Failed</h3>
+                <p id="error-details" style="color: #6b7280; margin-bottom: 1.5rem;"></p>
+                <button class="btn secondary-btn" onclick="restartScanner()">
+                    <i class="fas fa-redo"></i> Try Again
+                </button>
+            </div>
+        </div>
+
+        <div id="loading" style="text-align:center;">
+            <div style="margin-bottom: 1.5rem;">
+                <i class="fas fa-camera" style="font-size: 4rem; color: var(--primary-color); opacity: 0.3;"></i>
+            </div>
+            <button class="btn primary-btn btn-lg" onclick="startScanner()">
+                <i class="fas fa-video"></i> Start Camera
+            </button>
+            <p style="margin-top: 1rem; color: #6b7280; font-size: 0.875rem;">
+                <i class="fas fa-info-circle"></i> Camera access is required to scan QR codes
+            </p>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script>
+    let html5QrcodeScanner;
+    let isScanning = false;
+
+    function startScanner() {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('reader').style.display = 'block';
+
+        html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader",
+            {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0
+            }
+        );
+
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        isScanning = true;
+    }
+
+    async function onScanSuccess(decodedText, decodedResult) {
+        if (!isScanning) return; // Prevent multiple scans
+        isScanning = false;
+
+        console.log(`Scan result: ${decodedText}`);
+
+        // Stop scanning
+        html5QrcodeScanner.clear();
+        document.getElementById('reader').style.display = 'none';
+
+        // Show loading state
+        const loadingDiv = document.getElementById('loading');
+        loadingDiv.style.display = 'block';
+        loadingDiv.innerHTML = '<div class="spinner spinner-lg" style="margin: 2rem auto;"></div><p style="color: #6b7280; margin-top: 1rem;">Marking attendance...</p>';
+
+        // Send to API
+        try {
+            const response = await fetch('/api/qr/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session_id: decodedText })
+            });
+
+            const data = await response.json();
+
+            loadingDiv.style.display = 'none';
+
+            if (response.ok || response.status === 200) {
+                // Success
+                document.getElementById('scan-result').style.display = 'block';
+                document.getElementById('result-message').innerText = data.message || "Attendance Marked Successfully!";
+            } else {
+                // Error
+                showError(data.error || 'Unknown error occurred', getErrorDetails(data.error));
+            }
+        } catch (err) {
+            console.error(err);
+            loadingDiv.style.display = 'none';
+            showError("Network Error", "Failed to connect to server. Please check your internet connection.");
+        }
+    }
+
+    function onScanFailure(error) {
+        // Ignore scan failures - they're normal during scanning
+    }
+
+    function showError(msg, details = '') {
+        document.getElementById('scan-error').style.display = 'block';
+        document.getElementById('error-message').innerText = msg;
+        document.getElementById('error-details').innerText = details;
+    }
+
+    function getErrorDetails(error) {
+        const errorMap = {
+            'Invalid Session': 'The QR code is not valid. Please ask your teacher to generate a new one.',
+            'Session Expired (Inactive)': 'This QR code has already been used and is no longer active.',
+            'Session Expired (Timeout)': 'The 3-minute window has passed. Please ask your teacher to generate a new QR code.',
+            'Attendance already marked for this session.': 'You have already marked your attendance for this session.',
+            'Invalid QR Code': 'The scanned code is not a valid attendance QR code.',
+            'Unauthorized': 'Please log in to mark attendance.'
+        };
+
+        return errorMap[error] || 'Please try scanning again or contact your teacher.';
+    }
+
+    function restartScanner() {
+        document.getElementById('scan-error').style.display = 'none';
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('loading').innerHTML = `
+            <div style="margin-bottom: 1.5rem;">
+                <i class="fas fa-camera" style="font-size: 4rem; color: var(--primary-color); opacity: 0.3;"></i>
+            </div>
+            <button class="btn primary-btn btn-lg" onclick="startScanner()">
+                <i class="fas fa-video"></i> Start Camera
+            </button>
+            <p style="margin-top: 1rem; color: #6b7280; font-size: 0.875rem;">
+                <i class="fas fa-info-circle"></i> Camera access is required to scan QR codes
+            </p>
+        `;
+    }
+</script>
+{% endblock %}

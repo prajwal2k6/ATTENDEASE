@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container fade-in">
+    <div class="page-header">
+        <h2>Extracurricular Achievements</h2>
+    </div>
+
+    <div class="card-grid">
+        {% for achievement in extracurriculars %}
+        <div class="card fade-in-up achievement-card">
+            <div class="card-header">
+                <h3>{{ achievement.title }}</h3>
+                <span class="achievement-type">{{ achievement.achievement_type }}</span>
+            </div>
+            <div class="card-body">
+                <p>{{ achievement.description }}</p>
+                <span class="achievement-date">{{ achievement.date }}</span>
+            </div>
+        </div>
+        {% else %}
+        <p>No achievements added yet.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="profile-header">
+    <div class="profile-title">
+        <h1>{{ student.name }}</h1>
+        <span class="role-badge">Student</span>
+    </div>
+    {% if session['role'] == 'teacher' %}
+    <div class="actions">
+        <!-- Teacher specific actions if any -->
+    </div>
+    {% endif %}
+</div>
+
+<div class="profile-tabs">
+    <button class="tab-btn active" onclick="openTab(event, 'overview')">Overview</button>
+    <button class="tab-btn" onclick="openTab(event, 'marks')">Marks</button>
+    <button class="tab-btn" onclick="openTab(event, 'projects')">Projects</button>
+    <button class="tab-btn" onclick="openTab(event, 'remarks')">Remarks</button>
+    <button class="tab-btn" onclick="openTab(event, 'extracurricular')">Extracurricular</button>
+</div>
+
+<div id="overview" class="tab-content active">
+    <!-- Reusing content style from dashboard for consistent view -->
+    <div class="dashboard-grid">
+        <div class="dashboard-card color-1">
+            <div class="card-value">{{ attendance_percentage }}%</div>
+            <p>Attendance</p>
+        </div>
+        <div class="dashboard-card color-2">
+            <div class="card-value">{{ marks|length }}</div>
+            <p>Tests Taken</p>
+        </div>
+    </div>
+</div>
+
+<div id="marks" class="tab-content">
+    {% if session['role'] == 'teacher' %}
+    <div class="card form-card">
+        <h3>Add Marks</h3>
+        <form action="{{ url_for('add_mark', student_id=student.id) }}" method="POST">
+            <div class="input-group">
+                <input type="text" name="subject" placeholder="Subject" required>
+            </div>
+            <div class="input-group">
+                <input type="text" name="test_name" placeholder="Test Name" required>
+            </div>
+            <div class="input-group">
+                <input type="number" step="0.01" name="marks_obtained" placeholder="Marks Obtained" required>
+            </div>
+            <div class="input-group">
+                <input type="number" step="0.01" name="max_marks" placeholder="Maximum Marks" required>
+            </div>
+            <button type="submit" class="btn">Add Marks</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Subject</th>
+                    <th>Test</th>
+                    <th>Score</th>
+                    <th>Max Marks</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mark in marks %}
+                <tr>
+                    <td>{{ mark.subject }}</td>
+                    <td>{{ mark.test_name }}</td>
+                    <td>{{ mark.marks_obtained }}</td>
+                    <td>{{ mark.max_marks }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="projects" class="tab-content">
+    {% if session['role'] == 'teacher' %}
+    <div class="card form-card">
+        <h3>Assign Project</h3>
+        <form action="{{ url_for('add_project', student_id=student.id) }}" method="POST">
+            <div class="input-group">
+                <input type="text" name="title" placeholder="Project Title" required>
+            </div>
+            <div class="input-group">
+                <textarea name="description" placeholder="Project Description"></textarea>
+            </div>
+            <button type="submit" class="btn">Assign Project</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="cards-list">
+        {% for project in projects %}
+        <div class="detail-card">
+            <h4>{{ project.title }}</h4>
+            <p>{{ project.description }}</p>
+            <div class="status-row">
+                <span class="status-badge">{{ project.status }}</span>
+                {% if project.grade %}<strong>Grade: {{ project.grade }}</strong>{% endif %}
+            </div>
+
+            {% if session['role'] == 'teacher' %}
+            <form action="{{ url_for('update_project', project_id=project.id) }}" method="POST" class="update-form">
+                <select name="status">
+                    <option value="Assigned" {% if project.status=='Assigned' %}selected{% endif %}>Assigned</option>
+                    <option value="In Progress" {% if project.status=='In Progress' %}selected{% endif %}>In Progress
+                    </option>
+                    <option value="Submitted" {% if project.status=='Submitted' %}selected{% endif %}>Submitted</option>
+                    <option value="Graded" {% if project.status=='Graded' %}selected{% endif %}>Graded</option>
+                </select>
+                <input type="text" name="grade" placeholder="Grade" value="{{ project.grade or '' }}">
+                <button type="submit" class="btn btn-sm">Update</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="remarks" class="tab-content">
+    {% if session['role'] == 'teacher' %}
+    <div class="card form-card">
+        <h3>Add Remark</h3>
+        <form action="{{ url_for('add_remark', student_id=student.id) }}" method="POST">
+            <div class="input-group">
+                <textarea name="remark" placeholder="Write a remark..." required></textarea>
+            </div>
+            <button type="submit" class="btn">Add Remark</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="activity-feed">
+        {% for remark in remarks %}
+        <div class="activity-item">
+            <div class="activity-content">
+                <p>{{ remark.remark }}</p>
+                <small>{{ remark.date.strftime('%Y-%m-%d') }}</small>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="extracurricular" class="tab-content">
+    {% if session['role'] == 'teacher' %}
+    <div class="card form-card">
+        <h3>Add Achievement</h3>
+        <form action="{{ url_for('add_extracurricular', student_id=student.id) }}" method="POST">
+            <div class="input-group">
+                <input type="text" name="title" placeholder="Achievement Title" required>
+            </div>
+            <div class="input-group">
+                <select name="achievement_type" required>
+                    <option value="Sports">Sports</option>
+                    <option value="Cultural">Cultural</option>
+                    <option value="Academic">Academic</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <textarea name="description" placeholder="Description"></textarea>
+            </div>
+            <button type="submit" class="btn">Add Achievement</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="cards-list">
+        {% for item in extracurriculars %}
+        <div class="detail-card">
+            <h4>{{ item.title }}</h4>
+            <span class="type-badge">{{ item.achievement_type }}</span>
+            <p>{{ item.description }}</p>
+            <small>{{ item.date.strftime('%Y-%m-%d') }}</small>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .profile-tabs {
+        display: flex;
+        gap: 1rem;
+        border-bottom: 2px solid #e5e7eb;
+        margin-bottom: 2rem;
+        overflow-x: auto;
+    }
+
+    .tab-btn {
+        padding: 0.75rem 1.5rem;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        font-weight: 500;
+        color: #6b7280;
+        margin-bottom: -2px;
+    }
+
+    .tab-btn.active {
+        border-bottom-color: #4f46e5;
+        color: #4f46e5;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .form-card {
+        margin-bottom: 2rem;
+        border: 1px solid #e5e7eb;
+    }
+
+    .update-form {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #f3f4f6;
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    /* Reuse styles from dashboard */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .dashboard-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        color: white;
+        text-align: center;
+    }
+
+    .color-1 {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .color-2 {
+        background: linear-gradient(135deg, #ff9a9e, #fecfef);
+        color: #880e4f;
+    }
+
+    .card-value {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+</style>
+
+<script>
+    function openTab(evt, tabName) {
+        var i, tabContent, tabBtns;
+        tabContent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabContent.length; i++) {
+            tabContent[i].style.display = "none";
+        }
+        tabBtns = document.getElementsByClassName("tab-btn");
+        for (i = 0; i < tabBtns.length; i++) {
+            tabBtns[i].className = tabBtns[i].className.replace(" active", "");
+        }
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+    }
+</script>
+{% endblock %}

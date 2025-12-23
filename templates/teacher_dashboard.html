@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1>Teacher Dashboard</h1>
+        <div class="user-info">Logged in as Teacher: <strong>{{ session.get('name') }}</strong></div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+
+        <!-- Students Link -->
+        <div class="card"
+            style="grid-column: span 2; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h2>Manage Students</h2>
+                <p>View profiles, marks, and assign projects.</p>
+            </div>
+            <a href="{{ url_for('student_list') }}" class="btn">View All Students</a>
+        </div>
+
+        <!-- Mark Attendance Section -->
+        <div class="card">
+            <h2>Mark Daily Attendance</h2>
+            <form action="{{ url_for('mark_attendance') }}" method="POST">
+                <div class="input-group">
+                    <label for="date">Date</label>
+                    <!-- Default to today's date via JS or Backend, but simple HTML here -->
+                    <input type="date" id="date" name="date" required value="{{ date_string }}">
+                </div>
+
+                <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                    <thead>
+                        <tr style="text-align: left; background-color: #f9fafb;">
+                            <th style="padding: 0.5rem;">Student Name</th>
+                            <th style="padding: 0.5rem;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr style="border-bottom: 1px solid #e5e7eb;">
+                            <td style="padding: 0.5rem;">{{ student.name }}</td>
+                            <td style="padding: 0.5rem;">
+                                <select name="status_{{ student.id }}" style="padding: 0.25rem;">
+                                    <option value="Present">Present</option>
+                                    <option value="Absent">Absent</option>
+                                </select>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <button type="submit" class="btn" style="margin-top: 1rem;">Save Attendance</button>
+            </form>
+        </div>
+
+        <!-- Add Activity Section -->
+        <div class="card">
+            <h2>Add New Activity</h2>
+            <form action="{{ url_for('add_activity') }}" method="POST">
+                <div class="input-group">
+                    <label for="title">Activity Title</label>
+                    <input type="text" id="title" name="title" required placeholder="e.g. Science Quiz">
+                </div>
+
+                <div class="input-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="3"
+                        placeholder="Details about the activity..."></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="activity_date">Due/Activity Date</label>
+                    <input type="date" id="activity_date" name="date" required>
+                </div>
+
+                <button type="submit" class="btn">Create Activity</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Recent Activities List -->
+    <div class="card" style="margin-top: 2rem;">
+        <h2>Recent Activities Created</h2>
+        {% if activities %}
+        <ul style="list-style: none; padding: 0;">
+            {% for activity in activities %}
+            <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+                <strong>{{ activity.title }}</strong> - {{ activity.date.strftime('%Y-%m-%d') }}
+                <p style="margin: 0.25rem 0 0; color: #666; font-size: 0.9em;">{{ activity.description }}</p>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No activities added yet.</p>
+        {% endif %}
+    </div>
+
+</div>
+
+<script>
+    // Set default date to today
+    document.getElementById('date').valueAsDate = new Date();
+    document.getElementById('activity_date').valueAsDate = new Date();
+</script>
+{% endblock %}

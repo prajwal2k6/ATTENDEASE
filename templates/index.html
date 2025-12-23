@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero">
+    <div class="hero-content">
+        <h1>Welcome to Smart Curriculum</h1>
+        <p>Empowering Students, Teachers, and Parents with a Unified Platform for Academic Excellence.</p>
+        {% if not session.get('user_id') %}
+        <a href="{{ url_for('login') }}" class="btn btn-lg">Get Started</a>
+        {% else %}
+        {% if session.get('role') == 'teacher' %}
+        <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-lg">Go to Dashboard</a>
+        {% elif session.get('role') == 'student' %}
+        <a href="{{ url_for('student_dashboard') }}" class="btn btn-lg">Go to Dashboard</a>
+        {% elif session.get('role') == 'parent' %}
+        <a href="{{ url_for('parent_dashboard') }}" class="btn btn-lg">Go to Dashboard</a>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<div class="section" id="about">
+    <h2>Make Your Learning Smarter</h2>
+    <div class="about-grid">
+        <div class="feature-card">
+            <h3>For Students</h3>
+            <p>Track your attendance, view test results, and manage your projects all in one place.</p>
+        </div>
+        <div class="feature-card">
+            <h3>For Teachers</h3>
+            <p>Streamline attendance marking, grading, and provide personalized feedback effortlessly.</p>
+        </div>
+        <div class="feature-card">
+            <h3>For Parents</h3>
+            <p>Stay updated with your child's academic progress and extracurricular achievements.</p>
+        </div>
+    </div>
+</div>
+
+<div class="section" id="events">
+    <h2>Upcoming Events</h2>
+    <div class="events-grid">
+        <div class="event-card">
+            <div class="event-date">Dec 20</div>
+            <h3>Annual Sports Day</h3>
+            <p>Join us for a day of teamwork and athleticism.</p>
+        </div>
+        <div class="event-card">
+            <div class="event-date">Jan 05</div>
+            <h3>Science Exhibition</h3>
+            <p>Showcasing innovative projects from our talented students.</p>
+        </div>
+        <div class="event-card">
+            <div class="event-date">Jan 15</div>
+            <h3>Cultural Fest</h3>
+            <p>Celebrating art, music, and dance.</p>
+        </div>
+    </div>
+</div>
+
+<div class="section" id="alumni">
+    <h2>Alumni Achievements</h2>
+    <div class="alumni-grid">
+        <div class="alumni-card">
+            <div class="alumni-photo"></div>
+            <h3>Rohan Gupta</h3>
+            <p>"Smart Curriculum helped me stay organized and focused." - Now at Google.</p>
+        </div>
+        <div class="alumni-card">
+            <div class="alumni-photo"></div>
+            <h3>Sneha Reddy</h3>
+            <p>"The best platform for tracking academic growth." - Researcher at MIT.</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 4rem 2rem;
+        text-align: center;
+        border-radius: 1rem;
+        margin-bottom: 3rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .hero h1 {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        font-weight: 800;
+    }
+
+    .hero p {
+        font-size: 1.25rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+    }
+
+    .btn-lg {
+        padding: 0.75rem 2rem;
+        font-size: 1.1rem;
+        background-color: white;
+        color: #764ba2;
+        transition: transform 0.2s;
+    }
+
+    .btn-lg:hover {
+        background-color: #f3f4f6;
+        transform: translateY(-2px);
+    }
+
+    .section {
+        margin-bottom: 4rem;
+    }
+
+    .section h2 {
+        text-align: center;
+        margin-bottom: 2rem;
+        color: #1f2937;
+        font-size: 2rem;
+        position: relative;
+    }
+
+    .section h2::after {
+        content: '';
+        display: block;
+        width: 60px;
+        height: 4px;
+        background-color: #764ba2;
+        margin: 0.5rem auto 0;
+        border-radius: 2px;
+    }
+
+    .about-grid,
+    .events-grid,
+    .alumni-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .feature-card,
+    .event-card,
+    .alumni-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+        text-align: center;
+    }
+
+    .feature-card:hover,
+    .event-card:hover,
+    .alumni-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .event-date {
+        color: #764ba2;
+        font-weight: bold;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .alumni-photo {
+        width: 80px;
+        height: 80px;
+        background-color: #e5e7eb;
+        border-radius: 50%;
+        margin: 0 auto 1rem;
+    }
+</style>
+{% endblock %}

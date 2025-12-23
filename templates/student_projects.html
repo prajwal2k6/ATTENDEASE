@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container fade-in">
+    <div class="page-header">
+        <h2>Project Details</h2>
+    </div>
+
+    <div class="card-grid">
+        {% for project in projects %}
+        <div class="card fade-in-up">
+            <div class="card-header">
+                <h3>{{ project.title }}</h3>
+                <span class="status-badge status-{{ project.status | lower | replace(' ', '-') }}">
+                    {{ project.status }}
+                </span>
+            </div>
+            <div class="card-body">
+                <p>{{ project.description }}</p>
+                {% if project.grade %}
+                <div class="project-grade">
+                    <strong>Grade:</strong> {{ project.grade }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <p>No projects assigned.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

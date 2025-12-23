@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container fade-in">
+    <div class="page-header">
+        <h2>Test Results</h2>
+    </div>
+
+    <div class="card-grid">
+        {% for mark in marks %}
+        <div class="card fade-in-up">
+            <div class="card-header">
+                <h3>{{ mark.subject }}</h3>
+                <span class="test-name">{{ mark.test_name }}</span>
+            </div>
+            <div class="card-body">
+                <div class="result-display">
+                    <span class="marks-obtained">{{ mark.marks_obtained }}</span>
+                    <span class="marks-total">/ {{ mark.max_marks }}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ (mark.marks_obtained / mark.max_marks) * 100 }}%"></div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <p>No test results available.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

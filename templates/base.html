@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Curriculum System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <header>
+        <div class="header-left">
+            {% if request.path != '/' %}
+            <div class="back-btn" onclick="goBack()">
+                <i class="fas fa-arrow-left"></i>
+            </div>
+            {% endif %}
+
+            {% if session.get('user_id') %}
+            <div class="hamburger-menu" id="hamburger-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+            {% endif %}
+            <a href="/" class="logo">
+                <i class="fas fa-graduation-cap"></i> Smart Curriculum
+            </a>
+        </div>
+
+        <div class="header-right">
+            {% if session.get('user_id') %}
+            <div class="profile-dropdown">
+                <div class="profile-icon" id="profile-icon">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="dropdown-content" id="profile-dropdown-content">
+                    <div class="dropdown-header">
+                        <strong>{{ session.get('name') }}</strong><br>
+                        <small>{{ session.get('role')|capitalize }}</small>
+                    </div>
+                    {% if session.get('role') == 'teacher' %}
+                    <a href="{{ url_for('teacher_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                    {% elif session.get('role') == 'student' %}
+                    <a href="{{ url_for('student_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                    {% elif session.get('role') == 'parent' %}
+                    <a href="{{ url_for('parent_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </div>
+            </div>
+            {% else %}
+            <a href="{{ url_for('login') }}" class="login-link"><i class="fas fa-user"></i> Login</a>
+            {% endif %}
+        </div>
+    </header>
+
+    {% if session.get('user_id') %}
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>Menu</h3>
+            <span class="close-sidebar" id="close-sidebar">&times;</span>
+        </div>
+        <ul class="sidebar-menu">
+            {% if session.get('role') == 'teacher' %}
+            <li><a href="{{ url_for('teacher_dashboard') }}"><i class="fas fa-home"></i> Teacher Dashboard</a></li>
+            <li><a href="{{ url_for('student_list') }}"><i class="fas fa-users"></i> Student List</a></li>
+            <li><a href="{{ url_for('teacher_dashboard') }}"><i class="fas fa-calendar-check"></i> Attendance</a></li>
+            <li><a href="{{ url_for('generate_qr_page') }}"><i class="fas fa-qrcode"></i> Generate QR</a></li>
+            <li><a href="{{ url_for('student_list') }}"><i class="fas fa-chart-bar"></i> Marks</a></li>
+            <li><a href="{{ url_for('student_list') }}"><i class="fas fa-project-diagram"></i> Projects</a></li>
+            {% elif session.get('role') == 'student' %}
+            <li><a href="{{ url_for('student_dashboard') }}"><i class="fas fa-home"></i> Student Dashboard</a></li>
+            <li><a href="{{ url_for('student_attendance') }}"><i class="fas fa-calendar-check"></i> Attendance</a></li>
+            <li><a href="{{ url_for('scan_qr_page') }}"><i class="fas fa-qrcode"></i> Scan QR</a></li>
+            <li><a href="{{ url_for('student_results') }}"><i class="fas fa-chart-bar"></i> Results</a></li>
+            <li><a href="{{ url_for('student_projects') }}"><i class="fas fa-project-diagram"></i> Projects</a></li>
+            <li><a href="{{ url_for('student_achievements') }}"><i class="fas fa-trophy"></i> Achievements</a></li>
+            {% elif session.get('role') == 'parent' %}
+            <li><a href="{{ url_for('parent_dashboard') }}"><i class="fas fa-home"></i> Parent Dashboard</a></li>
+            <li><a href="{{ url_for('parent_dashboard') }}"><i class="fas fa-user-graduate"></i> Child Profile</a></li>
+            <li><a href="{{ url_for('parent_dashboard') }}"><i class="fas fa-calendar-check"></i> Attendance</a></li>
+            <li><a href="{{ url_for('parent_dashboard') }}"><i class="fas fa-chart-bar"></i> Results</a></li>
+            {% endif %}
+        </ul>
+    </div>
+    <div class="overlay" id="overlay"></div>
+    {% endif %}
+
+    <main>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        &copy; 2025 Smart Curriculum System. Built for SIH.
+    </footer>
+
+    <script>
+        function goBack() {
+            if (document.referrer && document.referrer.indexOf(window.location.host) !== -1) {
+                history.back();
+            } else {
+                window.location.href = "/";
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const hamburger = document.getElementById('hamburger-menu');
+            const sidebar = document.getElementById('sidebar');
+            const closeSidebar = document.getElementById('close-sidebar');
+            const overlay = document.getElementById('overlay');
+            const profileIcon = document.getElementById('profile-icon');
+            const profileDropdown = document.getElementById('profile-dropdown-content');
+
+            if (hamburger) {
+                hamburger.addEventListener('click', function () {
+                    sidebar.classList.add('active');
+                    overlay.classList.add('active');
+                });
+            }
+
+            if (closeSidebar) {
+                closeSidebar.addEventListener('click', function () {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', function () {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+
+            if (profileIcon) {
+                profileIcon.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    profileDropdown.classList.toggle('show');
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (!profileDropdown.contains(e.target) && !profileIcon.contains(e.target)) {
+                        profileDropdown.classList.remove('show');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

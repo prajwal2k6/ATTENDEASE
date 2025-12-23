@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Student Management</h2>
+    <div class="card">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="text-align: left; background-color: #f9fafb;">
+                    <th style="padding: 1rem;">Name</th>
+                    <th style="padding: 1rem;">Email</th>
+                    <th style="padding: 1rem;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 1rem;">{{ student.name }}</td>
+                    <td style="padding: 1rem;">{{ student.email }}</td>
+                    <td style="padding: 1rem;">
+                        <a href="{{ url_for('student_profile', student_id=student.id) }}" class="btn">View Profile</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
